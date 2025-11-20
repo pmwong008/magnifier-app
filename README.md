@@ -12,6 +12,8 @@ A Python-based magnifier application running on RPi4B, outputting to a TV throug
 
 ### 2. Install Dependencies
 '''bash
-sudo apt update
-sudo apt install python3-pip
-pip3 install -r requirements.txt
+sudo apt update'''
+'''bash
+sudo apt install python3-pip'''
+'''bash
+pip3 install -r requirements.txt'''
