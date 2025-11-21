@@ -1,37 +1,55 @@
-#!/usr/bin/env python3
+import tkinter as tk
 import cv2
 
-def main():
-    # Open the default webcam (usually /dev/video0 on Raspberry Pi)
+def run_magnifier(screen_width):
+    # Open camera
     cap = cv2.VideoCapture(0)
 
-    if not cap.isOpened():
-        print("Error: Could not open webcam.")
-        return
-
-    # Window name
-    window_name = "Magnifier App"
+    # Set capture width (height can be auto or fixed)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, screen_width)
 
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("Error: Failed to capture frame.")
             break
+        
+        height = int(frame.shape[0] * (screen_width / frame.shape[1]))
+        frame = cv2.resize(frame, (screen_width, height))
 
-        # --- Magnifier effect ---
-        # Resize the frame to 2x for magnification
-        magnified = cv2.resize(frame, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_LINEAR)
+        # Show the frame in OpenCV window
+        cv2.imshow("Magnifier", frame)
+        cv2.resizeWindow("Magnifier", screen_width, height)
 
-        # Show the magnified frame
-        cv2.imshow(window_name, magnified)
-
-        # Exit on 'q' key
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        # Keyboard controls
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):   # quit
             break
+        elif key == ord('+'): # zoom in
+            screen_width += 50
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, screen_width)
+        elif key == ord('-'): # zoom out
+            screen_width = max(100, screen_width - 50)
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, screen_width)
 
-    # Release resources
     cap.release()
     cv2.destroyAllWindows()
 
-if __name__ == "__main__":
-    main()
+def launch():
+    try:
+        width = int(entry.get())
+    except ValueError:
+        width = 640  # default
+    root.destroy()
+    run_magnifier(width)
+
+# --- Landing Page ---
+root = tk.Tk()
+root.title("Magnifier Setup")
+
+tk.Label(root, text="Enter screen width:").pack(pady=10)
+entry = tk.Entry(root)
+entry.pack(pady=5)
+
+tk.Button(root, text="Start Magnifier", command=launch).pack(pady=20)
+
+root.mainloop()
