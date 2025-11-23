@@ -7,8 +7,11 @@ def run_magnifier(screen_width):
 
     # Set capture width (height can be auto or fixed)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, screen_width)
-
-    while True:
+    
+    zoom_factor = 1.0
+    running = True
+    
+    while running:
         ret, frame = cap.read()
         if not ret:
             break
@@ -23,11 +26,15 @@ def run_magnifier(screen_width):
         # Keyboard controls
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):   # quit
+            print("Key pressed:", key)
+            running = False
             break
         elif key == ord('+'): # zoom in
+            print("Key pressed:", key)
             screen_width += 50
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, screen_width)
         elif key == ord('-'): # zoom out
+            print("Key pressed:", key)
             screen_width = max(100, screen_width - 50)
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, screen_width)
 
