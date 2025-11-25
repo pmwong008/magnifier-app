@@ -7,7 +7,7 @@ A Python-based magnifier application running on RPi4B, outputting to a TV throug
 ### 1. System Requirements
 - Raspberry Pi4B
 - Python 3.x
-- USB webcam
+- USB webcam or PiCamera
 - HDMI cable or wireless display option
 
 ### 2. Install Dependencies
@@ -17,3 +17,12 @@ A Python-based magnifier application running on RPi4B, outputting to a TV throug
 
 ```pip3 install -r requirements.txt```
 
+## Running
+### Development mode (default)
+```python3 magnifier.py```
+
+### Explicit DEV mode
+```MAGNIFIER_ENV=DEV python3 magnifier.py```
+
+### Production mode
+```MAGNIFIER_ENV=PROD python3 magnifier.py```

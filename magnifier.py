@@ -1,5 +1,27 @@
 import tkinter as tk
 import cv2
+import os
+import logging
+
+# --- Environment flag ---
+ENV_MODE = os.getenv("MAGNIFIER_ENV", "DEV")  # default to DEV if not set
+
+if ENV_MODE.upper() == "DEV":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%H:%M:%S",
+        handlers=[logging.StreamHandler()]  # console only
+    )
+else:  # PROD mode
+    logging.basicConfig(
+        level=logging.ERROR,  # only show errors
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%H:%M:%S",
+        handlers=[logging.StreamHandler()]  # console only, no file writes
+    )
+
+logger = logging.getLogger("magnifier")
 
 zoom_factor = 1.0
 
@@ -9,10 +31,10 @@ def get_camera_source():
         picam2 = Picamera2()
         picam2.configure(picam2.create_preview_configuration(main={"size": (640, 480)}))
         picam2.start()
-        print("Using Pi Camera via Picamera2")
+        logger.info("Using Pi Camera via Picamera2")
         return ("pi", picam2)
     except Exception:
-        print("Pi Camera not available, falling back to USB webcam")
+        logger.warning("Pi Camera not available, falling back to USB webcam")
         cap = cv2.VideoCapture(0)
         return ("usb", cap)
     
@@ -25,6 +47,7 @@ def run_magnifier(screen_width):
     camera_type, cam = get_camera_source()
     global zoom_factor
     running = True
+    logger.info("Magnifier started with width %d", screen_width)
     
     while running:
         if camera_type == "pi":
@@ -32,6 +55,7 @@ def run_magnifier(screen_width):
         else:
             ret, frame = cam.read()
             if not ret:
+                logger.error("Failed to capture frame from webcam")
                 break
 
         h, w = frame.shape[:2]
@@ -55,21 +79,22 @@ def run_magnifier(screen_width):
         # Keyboard controls
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):   # quit
-            print("Key pressed:", key)
+            logger.info("Quit requested by user")
             running = False
             # break
         elif key == ord('+'):
             zoom_factor += 0.1
-            print(f"Zoom in: {zoom_factor:.1f}x")
+            logger.info("Zoom in: %.1fx", zoom_factor)
         elif key == ord('-'):
             zoom_factor = max(1.0, zoom_factor - 0.1)
-            print(f"Zoom out: {zoom_factor:.1f}x")
-
+            logger.info("Zoom out: %.1fx", zoom_factor)
+            
     if camera_type == "pi":
         cam.stop()
     else:
         cam.release()
     cv2.destroyAllWindows()
+    logger.info("Magnifier closed")    
 
 def launch_window():
     root = tk.Tk()
