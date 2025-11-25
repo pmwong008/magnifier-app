@@ -2,16 +2,18 @@ import tkinter as tk
 import cv2
 import os
 import logging
+from logging.handlers import RotatingFileHandler
 
 # --- Environment flag ---
 ENV_MODE = os.getenv("MAGNIFIER_ENV", "DEV")  # default to DEV if not set
 
 if ENV_MODE.upper() == "DEV":
+    handler = RotatingFileHandler("magnifier.log", maxBytes=500000, backupCount=3)    
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
         datefmt="%H:%M:%S",
-        handlers=[logging.StreamHandler()]  # console only
+        handlers=[logging.StreamHandler(), handler]  # console + rotating file
     )
 else:  # PROD mode
     logging.basicConfig(
@@ -38,7 +40,7 @@ def get_camera_source():
         cap = cv2.VideoCapture(0)
         return ("usb", cap)
     
-def run_magnifier(screen_width):
+def run_magnifier(screen_width=1280):
     # Open camera
     # cap = cv2.VideoCapture(0)
 
@@ -55,7 +57,7 @@ def run_magnifier(screen_width):
         else:
             ret, frame = cam.read()
             if not ret:
-                logger.error("Failed to capture frame from webcam")
+                logger.error("Failed to capture frame from PiCamera/webcam")
                 break
 
         h, w = frame.shape[:2]
@@ -96,23 +98,33 @@ def run_magnifier(screen_width):
     cv2.destroyAllWindows()
     logger.info("Magnifier closed")    
 
-def launch_window():
+# --- DEV launch (Tkinter) ---
+def launch_dev():
     root = tk.Tk()
     root.title("Magnifier Setup")
 
     tk.Label(root, text="Choose screen width:").pack(pady=10)
 
-    tk.Button(root, text="Small (640)", 
+    tk.Button(root, text="Small (640)",
               command=lambda: (root.quit(), root.destroy(), run_magnifier(640))).pack()
-    tk.Button(root, text="Medium (800)", 
+    tk.Button(root, text="Medium (800)",
               command=lambda: (root.quit(), root.destroy(), run_magnifier(800))).pack()
-    tk.Button(root, text="Large (1280)", 
+    tk.Button(root, text="Large (1280)",
               command=lambda: (root.quit(), root.destroy(), run_magnifier(1280))).pack()
-    tk.Button(root, text="XL (1600)", 
+    tk.Button(root, text="XL (1600)",
               command=lambda: (root.quit(), root.destroy(), run_magnifier(1600))).pack()
 
     root.mainloop()
 
+# --- PROD launch (headless, GPIO-ready) ---
+def launch_prod():
+    screen_width = 1280  # default width for production
+    logger.info("Launching in PROD mode (GPIO controls expected)")
+    run_magnifier(screen_width)
+
 # --- Entry point ---
 if __name__ == "__main__":
-    launch_window()
+    if ENV_MODE.upper() == "DEV":
+        launch_dev()
+    else:
+        launch_prod()
