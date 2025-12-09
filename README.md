@@ -20,6 +20,10 @@ A Python-based magnifier application running on RPi4B, outputting to a TV throug
 ## Running
 ### Development mode (default)
 ```python3 magnifier.py```
+Keyboard shortcuts:
+```q``` quit program
+```+``` zoom in
+```-``` zoom out
 
 ### Explicit DEV mode
 ```MAGNIFIER_ENV=DEV python3 magnifier.py```
