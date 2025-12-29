@@ -1,6 +1,6 @@
-import gpiozero
-from gpiozero.pins.rpigpio import RPiGPIOPinFactory
-gpiozero.Device.pin_factory = RPiGPIOPinFactory()
+# import gpiozero
+# from gpiozero.pins.rpigpio import RPiGPIOPinFactory
+# gpiozero.Device.pin_factory = RPiGPIOPinFactory()
 
 from gpiozero import Button
 from signal import pause
