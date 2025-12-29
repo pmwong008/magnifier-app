@@ -1,3 +1,7 @@
+import gpiozero
+from gpiozero.pins.rpigpio import RPiGPIOPinFactory
+gpiozero.Device.pin_factory = RPiGPIOPinFactory()
+
 from gpiozero import Button
 from signal import pause
 '''
@@ -20,7 +24,7 @@ print("Ready. Press buttons...")
 pause()  # keeps script running
 '''
 
-
+'''
 btn1 = Button(17, pull_up=True)
 btn2 = Button(27, pull_up=True)
 btn3 = Button(22, pull_up=True)
@@ -32,5 +36,14 @@ btn3.when_pressed = lambda: print("Button 3 (GPIO22) pressed")
 btn4.when_pressed = lambda: print("Button 4 (GPIO23) pressed")
 
 print("Press each button...")
+'''
+
+from gpiozero import Button
+b = Button(17, pull_up=True)
+b.when_pressed = lambda: print("Button pressed")
+input("Press button now...")
+
+
+
 pause()
 
