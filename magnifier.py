@@ -3,6 +3,7 @@ import cv2
 import os
 import logging
 from logging.handlers import RotatingFileHandler
+from gpiozero import Button
 
 # --- Environment flag ---
 ENV_MODE = os.getenv("MAGNIFIER_ENV", "DEV")  # default to DEV if not set
@@ -27,6 +28,35 @@ logger = logging.getLogger("magnifier")
 
 zoom_factor = 1.0
 
+# --- Control functions ---
+def adjust_zoom(delta):
+    global zoom_factor
+    zoom_factor = max(1.0, zoom_factor + delta)
+    logger.info("Zoom adjusted: %.1fx", zoom_factor)
+
+def wake_screen():
+    logger.info("Wake screen triggered")
+
+def quit_app():
+    logger.info("Quit requested")
+    cv2.destroyAllWindows()
+    exit()
+
+# --- GPIO setup (PROD only) ---
+def setup_gpio_controls():
+    btn_zoom_in  = Button(17, pull_up=True)
+    btn_zoom_out = Button(27, pull_up=True)
+    btn_quit     = Button(22, pull_up=True)
+    btn_wake     = Button(23, pull_up=True)
+
+    btn_zoom_in.when_pressed  = lambda: adjust_zoom(+0.1)
+    btn_zoom_out.when_pressed = lambda: adjust_zoom(-0.1)
+    btn_quit.when_pressed     = quit_app
+    btn_wake.when_pressed     = wake_screen
+
+    logger.info("GPIO buttons initialized")
+
+# --- Camera source abstraction ---
 def get_camera_source():
     try:
         from picamera2 import Picamera2
@@ -39,13 +69,9 @@ def get_camera_source():
         logger.warning("Pi Camera not available, falling back to USB webcam")
         cap = cv2.VideoCapture(0)
         return ("usb", cap)
-    
-def run_magnifier(screen_width=1280):
-    # Open camera
-    # cap = cv2.VideoCapture(0)
 
-    # Set capture width (height can be auto or fixed)
-    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, screen_width)
+# --- Magnifier loop ---
+def run_magnifier(screen_width=1280):
     camera_type, cam = get_camera_source()
     global zoom_factor
     running = True
@@ -78,18 +104,16 @@ def run_magnifier(screen_width=1280):
         cv2.imshow("Magnifier", frame)
         cv2.resizeWindow("Magnifier", screen_width, height)
 
-        # Keyboard controls
+        # --- Keyboard controls ---
         key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):   # quit
-            logger.info("Quit requested by user")
-            running = False
-            # break
-        elif key == ord('+'):
-            zoom_factor += 0.1
-            logger.info("Zoom in: %.1fx", zoom_factor)
-        elif key == ord('-'):
-            zoom_factor = max(1.0, zoom_factor - 0.1)
-            logger.info("Zoom out: %.1fx", zoom_factor)
+        if key == ord('q'):
+            quit_app()
+        elif key == ord('+') or key == ord('i'):
+            adjust_zoom(+0.1)
+        elif key == ord('-') or key == ord('o'):
+            adjust_zoom(-0.1)
+        elif key == ord('w'):
+            wake_screen()
             
     if camera_type == "pi":
         cam.stop()
@@ -120,6 +144,7 @@ def launch_dev():
 def launch_prod():
     screen_width = 1280  # default width for production
     logger.info("Launching in PROD mode (GPIO controls expected)")
+    setup_gpio_controls()
     run_magnifier(screen_width)
 
 # --- Entry point ---
@@ -128,3 +153,4 @@ if __name__ == "__main__":
         launch_dev()
     else:
         launch_prod()
+
