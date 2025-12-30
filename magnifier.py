@@ -1,6 +1,7 @@
 import tkinter as tk
 import cv2
 import os
+import time
 import logging
 from logging.handlers import RotatingFileHandler
 from gpiozero import Device
@@ -36,21 +37,38 @@ else:  # PROD mode
 # logger = logging.getLogger("magnifier")
 
 zoom_factor = 1.0
+current_frame = None
+current_width = None
+current_height = None
 
 # --- Control functions ---
 def adjust_zoom(delta):
     global zoom_factor
     zoom_factor = max(1.0, zoom_factor + delta)
+    print(f"Zoom adjusted: {zoom_factor:.1f}x (via GPIO)")
     # logger.info("Zoom adjusted: %.1fx", zoom_factor)
     logger.info(f"Zoom adjusted: {zoom_factor:.1f}x (via GPIO)")
+    for h in logger.handlers: # flush logs from callback thread 
+        h.flush()
+        
+def wake_screen(f, w, h):
+    if f is None:
+        print("Wake button pressed, but no frame available yet")
+        return
+    print("Wake button pressed")
+    logger.info("Wake button pressed")
+    for r in logger.handlers:
+        r.flush()
+    cv2.imshow("Magnifier", cv2.resize(f, (w, h)))
 
-def wake_screen():
-    logger.info("Wake screen triggered")
 
-def quit_app():
-    logger.info("Quit requested")
-    cv2.destroyAllWindows()
-    exit()
+def quit_app(): 
+    global running 
+    running = False 
+    print("Quit requested") 
+    logger.info("Quit requested") 
+    for h in logger.handlers: 
+        h.flush() # Cleanup will happen after loop exits
 
 # --- GPIO setup (PROD only) ---
 def setup_gpio_controls():
@@ -63,7 +81,7 @@ def setup_gpio_controls():
     btn_zoom_in.when_pressed  = lambda: adjust_zoom(+0.1)
     btn_zoom_out.when_pressed = lambda: adjust_zoom(-0.1)
     btn_quit.when_pressed     = quit_app
-    btn_wake.when_pressed     = wake_screen
+    btn_wake.when_pressed     = lambda: wake_screen(current_frame, current_width, current_height)
 
     logger.info("GPIO buttons initialized and callbacks registered")
 
@@ -84,21 +102,29 @@ def get_camera_source():
 # --- Magnifier loop ---
 def run_magnifier(screen_width=1280):
     camera_type, cam = get_camera_source()
-    global zoom_factor
+    # global zoom_factor
+    global running, current_frame, current_width, current_height
     running = True
+    cap = cv2.VideoCapture(0)
+    
     logger.info("Magnifier started with width %d", screen_width)
     
     while running:
         if camera_type == "pi":
             frame = cam.capture_array()
         else:
-            ret, frame = cam.read()
+            ret, frame = cap.read()
             if not ret:
                 logger.error("Failed to capture frame from PiCamera/webcam")
                 break
 
         h, w = frame.shape[:2]
-
+        screen_height = int(screen_width * h / w)
+        # Update globals for wake_screen 
+        current_frame = frame 
+        current_width = screen_width 
+        current_height = screen_height
+        
         # --- Apply zoom by cropping ---
         if zoom_factor > 1.0:
             new_w = int(w / zoom_factor)
@@ -124,10 +150,9 @@ def run_magnifier(screen_width=1280):
         elif key == ord('-') or key == ord('o'):
             adjust_zoom(-0.1)
         elif key == ord('w'):
-            wake_screen()
-            
+            wake_screen(current_frame, current_width, current_height)
+        time.sleep(0.01)
         
-            
     if camera_type == "pi":
         cam.stop()
     else:
