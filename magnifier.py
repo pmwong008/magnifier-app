@@ -3,7 +3,10 @@ import cv2
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-import time
+from gpiozero import Device
+logger = logging.getLogger("magnifier")
+logger.info(f"Pin factory in use: {Device.pin_factory.__class__.__name__}")
+
 
 # import gpiozero
 # from gpiozero.pins.rpigpio import RPiGPIOPinFactory
@@ -30,7 +33,7 @@ else:  # PROD mode
         handlers=[logging.StreamHandler()]  # console only, no file writes
     )
 
-logger = logging.getLogger("magnifier")
+# logger = logging.getLogger("magnifier")
 
 zoom_factor = 1.0
 
@@ -51,6 +54,7 @@ def quit_app():
 
 # --- GPIO setup (PROD only) ---
 def setup_gpio_controls():
+    global btn_zoom_in, btn_zoom_out, btn_quit, btn_wake
     btn_zoom_in  = Button(17, pull_up=True)
     btn_zoom_out = Button(27, pull_up=True)
     btn_quit     = Button(22, pull_up=True)
@@ -61,7 +65,7 @@ def setup_gpio_controls():
     btn_quit.when_pressed     = quit_app
     btn_wake.when_pressed     = wake_screen
 
-    logger.info("GPIO buttons initialized")
+    logger.info("GPIO buttons initialized and callbacks registered")
 
 # --- Camera source abstraction ---
 def get_camera_source():
@@ -122,7 +126,7 @@ def run_magnifier(screen_width=1280):
         elif key == ord('w'):
             wake_screen()
             
-        time.sleep(0.001)
+        
             
     if camera_type == "pi":
         cam.stop()
