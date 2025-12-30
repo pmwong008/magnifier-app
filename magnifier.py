@@ -3,6 +3,7 @@ import cv2
 import os
 import logging
 from logging.handlers import RotatingFileHandler
+import time
 
 # import gpiozero
 # from gpiozero.pins.rpigpio import RPiGPIOPinFactory
@@ -37,7 +38,8 @@ zoom_factor = 1.0
 def adjust_zoom(delta):
     global zoom_factor
     zoom_factor = max(1.0, zoom_factor + delta)
-    logger.info("Zoom adjusted: %.1fx", zoom_factor)
+    # logger.info("Zoom adjusted: %.1fx", zoom_factor)
+    logger.info(f"Zoom adjusted: {zoom_factor:.1f}x (via GPIO)")
 
 def wake_screen():
     logger.info("Wake screen triggered")
@@ -119,6 +121,8 @@ def run_magnifier(screen_width=1280):
             adjust_zoom(-0.1)
         elif key == ord('w'):
             wake_screen()
+            
+        time.sleep(0.001)
             
     if camera_type == "pi":
         cam.stop()
