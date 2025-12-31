@@ -30,7 +30,7 @@ else:  # PROD mode
         handlers=[logging.StreamHandler()]  # console only, no file writes
     )
 
-# logger = logging.getLogger("magnifier")
+logger = logging.getLogger("magnifier")
 
 zoom_factor = 1.0
 
