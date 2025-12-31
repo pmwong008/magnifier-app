@@ -31,6 +31,8 @@ else:  # PROD mode
     )
 '''
 
+running = False
+
 logger = logging.getLogger("magnifier")
 logger.setLevel(logging.INFO) # default level
 
