@@ -13,7 +13,7 @@ from gpiozero import Button
 
 # --- Environment flag ---
 ENV_MODE = os.getenv("MAGNIFIER_ENV", "DEV")  # default to DEV if not set
-
+'''
 if ENV_MODE.upper() == "DEV":
     handler = RotatingFileHandler("magnifier.log", maxBytes=500000, backupCount=3)    
     logging.basicConfig(
@@ -29,8 +29,41 @@ else:  # PROD mode
         datefmt="%H:%M:%S",
         handlers=[logging.StreamHandler()]  # console only, no file writes
     )
+'''
 
 logger = logging.getLogger("magnifier")
+logger.setLevel(logging.INFO) # default level
+
+logger.handlers.clear() # clear existing (avoid duplicates if re-run)
+
+# Formatter for all handlers
+formatter = logging.Formatter(
+    "%(asctime)s [%(levelname)s] %(message)s", 
+    datefmt="%H:%M:%S"   
+)
+
+if ENV_MODE.upper() == "DEV": 
+    # Rotating file handler 
+    file_handler = RotatingFileHandler("magnifier.log", maxBytes=500000, backupCount=3) 
+    file_handler.setFormatter(formatter) 
+    file_handler.setLevel(logging.INFO) 
+    logger.addHandler(file_handler) 
+    # Console handler 
+    console_handler = logging.StreamHandler() 
+    console_handler.setFormatter(formatter) 
+    console_handler.setLevel(logging.INFO) 
+    logger.addHandler(console_handler) 
+    logger.info(f"Magnifier launched in {ENV_MODE.upper()} mode")
+
+    
+else: # PROD mode 
+    # Console only, errors only 
+    console_handler = logging.StreamHandler() 
+    console_handler.setFormatter(formatter) 
+    console_handler.setLevel(logging.ERROR) 
+    logger.addHandler(console_handler)
+    logger.info(f"Magnifier launched in {ENV_MODE.upper()} mode")
+
 
 zoom_factor = 1.0
 
@@ -42,27 +75,25 @@ btn_wake = None
 
 
 # --- Control functions ---
-def adjust_zoom(delta):
+def adjust_zoom(delta, source="GPIO"):
     global zoom_factor
     zoom_factor = max(1.0, zoom_factor + delta)
-    print(f"Zoom adjusted: {zoom_factor:.1f}x (via GPIO)")
-    # logger.info("Zoom adjusted: %.1fx", zoom_factor)
-    logger.info(f"Zoom adjusted: {zoom_factor:.1f}x (via GPIO)")
-    for h in logger.handlers: # flush logs from callback thread 
-        h.flush()
+    print(f"Zoom adjusted: {zoom_factor:.1f}x ({source})")
+    logger.info("Zoom adjusted: %.1fx (%s)", zoom_factor, source)
         
-def wake_screen():
+def wake_screen(source="GPIO"):
     
-    print("Wake button pressed")
-    logger.info("Wake button pressed")  
+    print(f"Wake button pressed ({source})")
+    logger.info("Wake button pressed (%s)", source)  
 
-def quit_app(): 
+def quit_app(source="GPIO"): 
     global running 
-    running = False 
-    print("Quit requested") 
-    logger.info("Quit requested") 
-    for h in logger.handlers: 
-        h.flush() # Cleanup will happen after loop exits
+    if not running:
+        return
+    running = False
+    print(f"Quit requested ({source})") 
+    logger.info("Quit requested (%s)", source) 
+
 
 # --- GPIO setup (PROD only) ---
 def setup_gpio_controls():
@@ -73,10 +104,10 @@ def setup_gpio_controls():
     btn_quit     = Button(22, pull_up=True, bounce_time=0.05)
     btn_wake     = Button(23, pull_up=True, bounce_time=0.05)
 
-    btn_zoom_in.when_pressed  = lambda: adjust_zoom(+0.1)
-    btn_zoom_out.when_pressed = lambda: adjust_zoom(-0.1)
-    btn_quit.when_pressed     = quit_app
-    btn_wake.when_pressed     = lambda: wake_screen()
+    btn_zoom_in.when_pressed  = lambda: adjust_zoom(+0.1, source="GPIO")
+    btn_zoom_out.when_pressed = lambda: adjust_zoom(-0.1, source="GPIO")
+    btn_quit.when_pressed     = quit_app(source="GPIO")
+    btn_wake.when_pressed     = wake_screen(source="GPIO")
 
     logger.info("GPIO buttons initialized and callbacks registered")
 
@@ -139,13 +170,13 @@ def run_magnifier(screen_width=1280):
         # --- Keyboard controls ---
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
-            quit_app()
+            quit_app(source="Keyboard")
         elif key == ord('+') or key == ord('i'):
-            adjust_zoom(+0.1)
+            adjust_zoom(+0.1, source="Keyboard")
         elif key == ord('-') or key == ord('o'):
-            adjust_zoom(-0.1)
+            adjust_zoom(-0.1, source="Keyboard")
         elif key == ord('w'):
-            wake_screen()
+            wake_screen(source="Keyboard")
         time.sleep(0.01)
         
     if camera_type == "pi":
@@ -183,7 +214,9 @@ def launch_prod():
 # --- Entry point ---
 if __name__ == "__main__":
     if ENV_MODE.upper() == "DEV":
+        logger.info("Keyboard controls enabled (DEV mode)")
         launch_dev()
     else:
+        logger.info("GPIO buttons initialized, keyboard controls also available (PROD mode)")
         launch_prod()
 
