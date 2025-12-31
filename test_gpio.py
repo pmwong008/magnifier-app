@@ -2,10 +2,10 @@ from gpiozero import Button
 import signal
 
 # Define buttons
-btn_zoom_in  = Button(17, pull_up=True, bounce_time=0.05)
-btn_zoom_out = Button(27, pull_up=True, bounce_time=0.05)
-btn_quit     = Button(22, pull_up=True, bounce_time=0.05)
-btn_wake     = Button(23, pull_up=True, bounce_time=0.05)
+btn_zoom_in  = Button(17, pull_up=True, bounce_time=0.01)
+btn_zoom_out = Button(27, pull_up=True, bounce_time=0.01)
+btn_quit     = Button(22, pull_up=True, bounce_time=0.01)
+btn_wake     = Button(23, pull_up=True, bounce_time=0.01)
 
 # Callbacks
 def zoom_in():
