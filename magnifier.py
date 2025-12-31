@@ -4,9 +4,9 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 
-import gpiozero
-from gpiozero.pins.rpigpio import RPiGPIOPinFactory
-gpiozero.Device.pin_factory = RPiGPIOPinFactory()
+# import gpiozero
+# from gpiozero.pins.rpigpio import RPiGPIOPinFactory
+# gpiozero.Device.pin_factory = RPiGPIOPinFactory()
 
 from gpiozero import Button
 
