@@ -108,8 +108,8 @@ def setup_gpio_controls():
 
     btn_zoom_in.when_pressed  = lambda: adjust_zoom(+0.1, source="GPIO")
     btn_zoom_out.when_pressed = lambda: adjust_zoom(-0.1, source="GPIO")
-    btn_quit.when_pressed     = quit_app(source="GPIO")
-    btn_wake.when_pressed     = wake_screen(source="GPIO")
+    btn_quit.when_pressed     = lambda: quit_app(source="GPIO")
+    btn_wake.when_pressed     = lambda: wake_screen(source="GPIO")
 
     logger.info("GPIO buttons initialized and callbacks registered")
 
