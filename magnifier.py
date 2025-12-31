@@ -51,16 +51,10 @@ def adjust_zoom(delta):
     for h in logger.handlers: # flush logs from callback thread 
         h.flush()
         
-def wake_screen(f, w, h):
-    if f is None:
-        print("Wake button pressed, but no frame available yet")
-        return
+def wake_screen():
+    
     print("Wake button pressed")
-    logger.info("Wake button pressed")
-    for r in logger.handlers:
-        r.flush()
-    cv2.imshow("Magnifier", cv2.resize(f, (w, h)))
-
+    logger.info("Wake button pressed")  
 
 def quit_app(): 
     global running 
@@ -82,7 +76,7 @@ def setup_gpio_controls():
     btn_zoom_in.when_pressed  = lambda: adjust_zoom(+0.1)
     btn_zoom_out.when_pressed = lambda: adjust_zoom(-0.1)
     btn_quit.when_pressed     = quit_app
-    btn_wake.when_pressed     = lambda: wake_screen(current_frame, current_width, current_height)
+    btn_wake.when_pressed     = lambda: wake_screen()
 
     logger.info("GPIO buttons initialized and callbacks registered")
 
@@ -103,8 +97,8 @@ def get_camera_source():
 # --- Magnifier loop ---
 def run_magnifier(screen_width=1280):
     camera_type, cam = get_camera_source()
-    # global zoom_factor
-    global running, current_frame, current_width, current_height
+    global zoom_factor
+    # global running, current_frame, current_width, current_height
     running = True
     cap = cv2.VideoCapture(0)
     
@@ -120,11 +114,11 @@ def run_magnifier(screen_width=1280):
                 break
 
         h, w = frame.shape[:2]
-        screen_height = int(screen_width * h / w)
+        # screen_height = int(screen_width * h / w)
         # Update globals for wake_screen 
-        current_frame = frame 
-        current_width = screen_width 
-        current_height = screen_height
+        # current_frame = frame 
+        # current_width = screen_width 
+        # current_height = screen_height
         
         # --- Apply zoom by cropping ---
         if zoom_factor > 1.0:
@@ -151,7 +145,7 @@ def run_magnifier(screen_width=1280):
         elif key == ord('-') or key == ord('o'):
             adjust_zoom(-0.1)
         elif key == ord('w'):
-            wake_screen(current_frame, current_width, current_height)
+            wake_screen()
         time.sleep(0.01)
         
     if camera_type == "pi":
