@@ -97,10 +97,10 @@ def get_camera_source():
 # --- Magnifier loop ---
 def run_magnifier(screen_width=1280):
     camera_type, cam = get_camera_source()
-    global zoom_factor
+    global zoom_factor, running
     # global running, current_frame, current_width, current_height
     running = True
-    cap = cv2.VideoCapture(0)
+    # cap = cv2.VideoCapture(0)
     
     logger.info("Magnifier started with width %d", screen_width)
     
@@ -108,7 +108,7 @@ def run_magnifier(screen_width=1280):
         if camera_type == "pi":
             frame = cam.capture_array()
         else:
-            ret, frame = cap.read()
+            ret, frame = cam.read()
             if not ret:
                 logger.error("Failed to capture frame from PiCamera/webcam")
                 break
