@@ -4,10 +4,6 @@ import os
 import time
 import logging
 from logging.handlers import RotatingFileHandler
-from gpiozero import Device
-logger = logging.getLogger("magnifier")
-logger.info(f"Pin factory in use: {Device.pin_factory.__class__.__name__}")
-
 
 # import gpiozero
 # from gpiozero.pins.rpigpio import RPiGPIOPinFactory
@@ -37,9 +33,13 @@ else:  # PROD mode
 # logger = logging.getLogger("magnifier")
 
 zoom_factor = 1.0
-current_frame = None
-current_width = None
-current_height = None
+
+# Globals for GPIO buttons
+btn_zoom_in = None
+btn_zoom_out = None
+btn_quit = None
+btn_wake = None
+
 
 # --- Control functions ---
 def adjust_zoom(delta):
@@ -73,10 +73,11 @@ def quit_app():
 # --- GPIO setup (PROD only) ---
 def setup_gpio_controls():
     global btn_zoom_in, btn_zoom_out, btn_quit, btn_wake
-    btn_zoom_in  = Button(17, pull_up=True)
-    btn_zoom_out = Button(27, pull_up=True)
-    btn_quit     = Button(22, pull_up=True)
-    btn_wake     = Button(23, pull_up=True)
+    
+    btn_zoom_in  = Button(17, pull_up=True, bounce_time=0.05)
+    btn_zoom_out = Button(27, pull_up=True, bounce_time=0.05)
+    btn_quit     = Button(22, pull_up=True, bounce_time=0.05)
+    btn_wake     = Button(23, pull_up=True, bounce_time=0.05)
 
     btn_zoom_in.when_pressed  = lambda: adjust_zoom(+0.1)
     btn_zoom_out.when_pressed = lambda: adjust_zoom(-0.1)
