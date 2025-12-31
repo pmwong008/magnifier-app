@@ -33,6 +33,13 @@ logger = logging.getLogger("magnifier")
 
 zoom_factor = 1.0
 
+# Globals for GPIO buttons
+btn_zoom_in = None
+btn_zoom_out = None
+btn_quit = None
+btn_wake = None
+
+
 # --- Control functions ---
 def adjust_zoom(delta):
     global zoom_factor
@@ -49,10 +56,12 @@ def quit_app():
 
 # --- GPIO setup (PROD only) ---
 def setup_gpio_controls():
-    btn_zoom_in  = Button(17, pull_up=True)
-    btn_zoom_out = Button(27, pull_up=True)
-    btn_quit     = Button(22, pull_up=True)
-    btn_wake     = Button(23, pull_up=True)
+    global btn_zoom_in, btn_zoom_out, btn_quit, btn_wake
+    
+    btn_zoom_in  = Button(17, pull_up=True, bounce_time=0.05)
+    btn_zoom_out = Button(27, pull_up=True, bounce_time=0.05)
+    btn_quit     = Button(22, pull_up=True, bounce_time=0.05)
+    btn_wake     = Button(23, pull_up=True, bounce_time=0.05)
 
     btn_zoom_in.when_pressed  = lambda: adjust_zoom(+0.1)
     btn_zoom_out.when_pressed = lambda: adjust_zoom(-0.1)
