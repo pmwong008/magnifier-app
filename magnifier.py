@@ -10,6 +10,27 @@ from logging.handlers import RotatingFileHandler
 # gpiozero.Device.pin_factory = RPiGPIOPinFactory()
 
 from gpiozero import Button
+import subprocess
+
+btn_toggle = Button(22, pull_up=True, bounce_time=0.02)
+
+def is_service_active(name="magnifier.service"):
+    result = subprocess.run(["systemctl", "is-active", name], capture_output=True, text=True)
+    return result.stdout.strip() == "active"
+
+def toggle_magnifier():
+    if is_service_active():
+        subprocess.run(["systemctl", "stop", "magnifier.service"])
+        print("Magnifier stopped")
+    else:
+        subprocess.run(["systemctl", "start", "magnifier.service"])
+        print("Magnifier started")
+
+btn_toggle.when_pressed = toggle_magnifier
+
+print("GPIO toggle ready. Press button to start/stop magnifier.")
+btn_toggle.wait_for_press()
+
 
 # --- Environment flag ---
 ENV_MODE = os.getenv("MAGNIFIER_ENV", "DEV")  # default to DEV if not set
