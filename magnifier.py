@@ -67,15 +67,15 @@ else: # PROD mode
 # Global state 
 running = False 
 zoom_factor = 1.0 
-current_frame = None 
-current_width = None 
-current_height = None
+# current_frame = None 
+# current_width = None 
+# current_height = None
 
 # Globals for GPIO buttons
 btn_zoom_in = None
 btn_zoom_out = None
-btn_quit = None
-btn_wake = None
+# btn_quit = None
+# btn_wake = None
 
 
 # --- Control functions ---
@@ -84,7 +84,7 @@ def adjust_zoom(delta, source="GPIO"):
     zoom_factor = max(1.0, zoom_factor + delta)
     print(f"Zoom adjusted: {zoom_factor:.1f}x ({source})")
     logger.info("Zoom adjusted: %.1fx (%s)", zoom_factor, source)
-        
+'''       
 def wake_screen(source="GPIO"):
     global current_frame, current_width, current_height
     if current_frame is not None:
@@ -105,7 +105,7 @@ def quit_app(source="GPIO"):
     running = False
     print(f"Quit requested ({source})") 
     logger.info("Quit requested (%s)", source) 
-
+'''
 
 # --- GPIO setup (PROD only) ---
 def setup_gpio_controls():
@@ -113,13 +113,13 @@ def setup_gpio_controls():
     
     btn_zoom_in  = Button(17, pull_up=True, bounce_time=0.02)
     btn_zoom_out = Button(27, pull_up=True, bounce_time=0.02)
-    btn_quit     = Button(22, pull_up=True, bounce_time=0.02)
-    btn_wake     = Button(23, pull_up=True, bounce_time=0.02)
+    # btn_quit     = Button(22, pull_up=True, bounce_time=0.02)
+    # btn_wake     = Button(23, pull_up=True, bounce_time=0.02)
 
     btn_zoom_in.when_pressed  = lambda: adjust_zoom(+0.1, source="GPIO")
     btn_zoom_out.when_pressed = lambda: adjust_zoom(-0.1, source="GPIO")
-    btn_quit.when_pressed     = lambda: quit_app(source="GPIO")
-    btn_wake.when_pressed     = lambda: wake_screen(source="GPIO")
+    # btn_quit.when_pressed     = lambda: quit_app(source="GPIO")
+    # btn_wake.when_pressed     = lambda: wake_screen(source="GPIO")
 
     logger.info("GPIO buttons initialized and callbacks registered")
 
@@ -140,7 +140,8 @@ def get_camera_source():
 # Run Magnifier Loop
 def run_magnifier(screen_width=1280):
     camera_type, cam = get_camera_source()
-    global zoom_factor, running, current_frame, current_width, current_height
+    global zoom_factor, running
+    # current_frame, current_width, current_height
     running = True
     
     logger.info("Magnifier started with width %d", screen_width)
@@ -185,9 +186,9 @@ def run_magnifier(screen_width=1280):
         frame = cv2.resize(frame, (screen_width, height))
 
         # --- Update globals for wake_screen (AFTER resize) ---
-        current_frame = frame
-        current_width = screen_width
-        current_height = height
+        # current_frame = frame
+        # current_width = screen_width
+        # current_height = height
 
         # --- Show the frame ---
         cv2.imshow("Magnifier", frame)
@@ -195,14 +196,12 @@ def run_magnifier(screen_width=1280):
 
         # --- Keyboard controls ---
         key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            quit_app(source="Keyboard")
-        elif key in (ord('+'), ord('i')):
+        # if key == ord('q'): quit_app(source="Keyboard")
+        if key in (ord('+'), ord('i')):
             adjust_zoom(+0.1, source="Keyboard")
         elif key in (ord('-'), ord('o')):
             adjust_zoom(-0.1, source="Keyboard")
-        elif key == ord('w'):
-            wake_screen(source="Keyboard")
+        # elif key == ord('w'): wake_screen(source="Keyboard")
 
         time.sleep(0.01)
         
