@@ -31,8 +31,6 @@ else:  # PROD mode
     )
 '''
 
-running = False
-
 logger = logging.getLogger("magnifier")
 logger.setLevel(logging.INFO) # default level
 
@@ -66,8 +64,12 @@ else: # PROD mode
     logger.addHandler(console_handler)
     logger.info(f"Magnifier launched in {ENV_MODE.upper()} mode")
 
-
-zoom_factor = 1.0
+# Global state 
+running = False 
+zoom_factor = 1.0 
+current_frame = None 
+current_width = None 
+current_height = None
 
 # Globals for GPIO buttons
 btn_zoom_in = None
@@ -84,9 +86,17 @@ def adjust_zoom(delta, source="GPIO"):
     logger.info("Zoom adjusted: %.1fx (%s)", zoom_factor, source)
         
 def wake_screen(source="GPIO"):
-    
-    print(f"Wake button pressed ({source})")
-    logger.info("Wake button pressed (%s)", source)  
+    global current_frame, current_width, current_height
+    if current_frame is not None:
+        cv2.imshow("Magnifier", current_frame)
+        cv2.resizeWindow("Magnifier", current_width, current_height)
+        cv2.waitKey(1)  # <-- forces OpenCV to process GUI events
+        print(f"Wake button pressed ({source})")
+        logger.info("Wake button pressed (%s)", source)
+    else:
+        print("Wake pressed but no frame available")
+        logger.warning("Wake pressed but no frame available")
+
 
 def quit_app(source="GPIO"): 
     global running 
@@ -127,13 +137,11 @@ def get_camera_source():
         cap = cv2.VideoCapture(0)
         return ("usb", cap)
 
-# --- Magnifier loop ---
+# Run Magnifier Loop
 def run_magnifier(screen_width=1280):
     camera_type, cam = get_camera_source()
-    global zoom_factor, running
-    # global running, current_frame, current_width, current_height
+    global zoom_factor, running, current_frame, current_width, current_height
     running = True
-    # cap = cv2.VideoCapture(0)
     
     logger.info("Magnifier started with width %d", screen_width)
     
@@ -146,26 +154,25 @@ def run_magnifier(screen_width=1280):
                 logger.error("Failed to capture frame from PiCamera/webcam")
                 break
 
-        h, w = frame.shape[:2]
-        # screen_height = int(screen_width * h / w)
-        # Update globals for wake_screen 
-        # current_frame = frame 
-        # current_width = screen_width 
-        # current_height = screen_height
-        
         # --- Apply zoom by cropping ---
+        h, w = frame.shape[:2]
         if zoom_factor > 1.0:
             new_w = int(w / zoom_factor)
             new_h = int(h / zoom_factor)
             x1 = (w - new_w) // 2
             y1 = (h - new_h) // 2
             frame = frame[y1:y1+new_h, x1:x1+new_w]
-        
+
         # --- Resize to chosen screen width ---
         height = int(frame.shape[0] * (screen_width / frame.shape[1]))
         frame = cv2.resize(frame, (screen_width, height))
 
-        # Show the frame in OpenCV window
+        # --- Update globals for wake_screen (AFTER resize) ---
+        current_frame = frame
+        current_width = screen_width
+        current_height = height
+
+        # --- Show the frame ---
         cv2.imshow("Magnifier", frame)
         cv2.resizeWindow("Magnifier", screen_width, height)
 
@@ -173,12 +180,13 @@ def run_magnifier(screen_width=1280):
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
             quit_app(source="Keyboard")
-        elif key == ord('+') or key == ord('i'):
+        elif key in (ord('+'), ord('i')):
             adjust_zoom(+0.1, source="Keyboard")
-        elif key == ord('-') or key == ord('o'):
+        elif key in (ord('-'), ord('o')):
             adjust_zoom(-0.1, source="Keyboard")
         elif key == ord('w'):
             wake_screen(source="Keyboard")
+
         time.sleep(0.01)
         
     if camera_type == "pi":
@@ -186,7 +194,8 @@ def run_magnifier(screen_width=1280):
     else:
         cam.release()
     cv2.destroyAllWindows()
-    logger.info("Magnifier closed")    
+    logger.info("Magnifier closed")
+
 
 # --- DEV launch (Tkinter) ---
 def launch_dev():
