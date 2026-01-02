@@ -150,21 +150,38 @@ def run_magnifier(screen_width=1280):
             frame = cam.capture_array()
         else:
             ret, frame = cam.read()
-            if not ret:
-                logger.error("Failed to capture frame from PiCamera/webcam")
-                break
+            if not ret or frame is None:
+                logger.warning("No frame captured, skipping iteration")
+                # logger.error("Failed to capture frame from PiCamera/webcam")
+                time.sleep(0.05) #short pause before retry
+                # break
+                continue
 
         # --- Apply zoom by cropping ---
         h, w = frame.shape[:2]
+        if h == 0 or w == 0:
+            logger.warning("Invalid frame dimensions, skipping iteration")
+            continue
+        
         if zoom_factor > 1.0:
             new_w = int(w / zoom_factor)
             new_h = int(h / zoom_factor)
+            if new_w <= 0 or new_h <=0:
+                logger.warning("Zoom factor too high, skipping iteration")
+                continue
             x1 = (w - new_w) // 2
             y1 = (h - new_h) // 2
             frame = frame[y1:y1+new_h, x1:x1+new_w]
 
         # --- Resize to chosen screen width ---
+        if frame.shape[1] == 0:
+            logger.warning("Frame width is zero, skipping iteration")
+            continue
         height = int(frame.shape[0] * (screen_width / frame.shape[1]))
+        if height <=0:
+            logger.warning("Calculated height invalid, skipping iteration")
+            continue
+        
         frame = cv2.resize(frame, (screen_width, height))
 
         # --- Update globals for wake_screen (AFTER resize) ---
