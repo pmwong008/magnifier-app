@@ -77,10 +77,10 @@ if ENV_MODE.upper() == "DEV":
     
 else: # PROD mode 
     # Rotating file handler 
-    file_handler = RotatingFileHandler("/var/log/magnifier.log", maxBytes=500000, backupCount=3)
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.INFO)
-    logger.addHandler(file_handler)
+    # file_handler = RotatingFileHandler("/var/log/magnifier.log", maxBytes=500000, backupCount=3)
+    # file_handler.setFormatter(formatter)
+    # file_handler.setLevel(logging.INFO)
+    # logger.addHandler(file_handler)
     
     console_handler = logging.StreamHandler() 
     console_handler.setFormatter(formatter) 

@@ -31,5 +31,6 @@ Keyboard shortcuts:
 ### Production mode
 ```APP_MODE=PROD python3 magnifier.py```
 
-### Check system logs during app-level tests
+### Check system logs and status during app-level tests
 ```journalctl -u magnifier.service -f```
+```systemctl status magnifier.service```
