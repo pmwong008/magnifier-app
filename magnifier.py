@@ -12,8 +12,6 @@ from logging.handlers import RotatingFileHandler
 from gpiozero import Button
 import subprocess
 
-btn_toggle = Button(22, pull_up=True, bounce_time=0.02)
-
 def is_service_active(name="magnifier.service"):
     result = subprocess.run(["systemctl", "is-active", name], capture_output=True, text=True)
     return result.stdout.strip() == "active"
@@ -26,10 +24,10 @@ def toggle_magnifier():
         subprocess.run(["systemctl", "start", "magnifier.service"])
         print("Magnifier started")
 
-btn_toggle.when_pressed = toggle_magnifier
-
-print("GPIO toggle ready. Press button to start/stop magnifier.")
-btn_toggle.wait_for_press()
+def setup_service_toggle():
+    btn_toggle = Button(22, pull_up=True, bounce_time=0.02)
+    btn_toggle.when_pressed = toggle_magnifier
+    logger.info("GPIO toggle ready. Press button to start/stop magnifier.")
 
 
 # --- Environment flag ---
@@ -252,9 +250,9 @@ def launch_prod():
 
 if __name__ == "__main__":
     mode = os.getenv("APP_MODE", "DEV")
+    logger.info("APP_MODE=%s", os.getenv("APP_MODE", "DEV"))
     if mode == "PROD":
-        logger.info("APP_MODE=%s", os.getenv("APP_MODE", "DEV"))
-
+        setup_service_toggle()
         launch_prod()   # GPIO buttons, ON/OFF appliance mode
     else:
         launch_dev()    # keyboard shortcuts
