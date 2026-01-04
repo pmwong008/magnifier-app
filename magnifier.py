@@ -31,7 +31,7 @@ def setup_service_toggle():
 
 
 # --- Environment flag ---
-ENV_MODE = os.getenv("MAGNIFIER_ENV", "DEV")  # default to DEV if not set
+ENV_MODE = os.getenv("APP_MODE", "DEV")  # default to DEV if not set
 
 if ENV_MODE.upper() == "DEV":
     handler = RotatingFileHandler("magnifier.log", maxBytes=500000, backupCount=3)    
