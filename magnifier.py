@@ -76,10 +76,15 @@ if ENV_MODE.upper() == "DEV":
 
     
 else: # PROD mode 
-    # Console only, errors only 
+    # Rotating file handler 
+    file_handler = RotatingFileHandler("/var/log/magnifier.log", maxBytes=500000, backupCount=3)
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.INFO)
+    logger.addHandler(file_handler)
+    
     console_handler = logging.StreamHandler() 
     console_handler.setFormatter(formatter) 
-    console_handler.setLevel(logging.ERROR) 
+    console_handler.setLevel(logging.INFO) 
     logger.addHandler(console_handler)
     logger.info(f"Magnifier launched in {ENV_MODE.upper()} mode")
 
