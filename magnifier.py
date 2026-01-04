@@ -88,16 +88,11 @@ else: # PROD mode
 # Global state 
 running = False 
 zoom_factor = 1.0 
-# current_frame = None 
-# current_width = None 
-# current_height = None
 
 # Globals for GPIO buttons
 btn_zoom_in = None
 btn_zoom_out = None
-# btn_quit = None
-# btn_wake = None
-
+btn_quit = None
 
 # --- Control functions ---
 def adjust_zoom(delta, source="GPIO"):
@@ -105,45 +100,38 @@ def adjust_zoom(delta, source="GPIO"):
     zoom_factor = max(1.0, zoom_factor + delta)
     print(f"Zoom adjusted: {zoom_factor:.1f}x ({source})")
     logger.info("Zoom adjusted: %.1fx (%s)", zoom_factor, source)
-'''       
-def wake_screen(source="GPIO"):
-    global current_frame, current_width, current_height
-    if current_frame is not None:
-        cv2.imshow("Magnifier", current_frame)
-        cv2.resizeWindow("Magnifier", current_width, current_height)
-        cv2.waitKey(1)  # <-- forces OpenCV to process GUI events
-        print(f"Wake button pressed ({source})")
-        logger.info("Wake button pressed (%s)", source)
-    else:
-        print("Wake pressed but no frame available")
-        logger.warning("Wake pressed but no frame available")
 
-
-def quit_app(source="GPIO"): 
+def stop_magnifier(source="GPIO"): 
     global running 
     if not running:
         return
     running = False
+    cleanup_gpio()
     print(f"Quit requested ({source})") 
     logger.info("Quit requested (%s)", source) 
-'''
+    # uncommnet the line below to stop the systemd service entirely.
+    # subprocess.run(["systemctl", "stop", "magnifier.service"])
 
 # --- GPIO setup (PROD only) ---
 def setup_gpio_controls():
-    global btn_zoom_in, btn_zoom_out, btn_quit, btn_wake
+    global btn_zoom_in, btn_zoom_out, btn_quit
     
-    btn_zoom_in  = Button(17, pull_up=True, bounce_time=0.02)
-    btn_zoom_out = Button(27, pull_up=True, bounce_time=0.02)
-    # btn_quit     = Button(22, pull_up=True, bounce_time=0.02)
-    # btn_wake     = Button(23, pull_up=True, bounce_time=0.02)
+    btn_zoom_in  = Button(17, pull_up=True, bounce_time=0.05)
+    btn_zoom_out = Button(27, pull_up=True, bounce_time=0.05)
+    btn_quit     = Button(22, pull_up=True, bounce_time=0.05)
 
     btn_zoom_in.when_pressed  = lambda: adjust_zoom(+0.1, source="GPIO")
     btn_zoom_out.when_pressed = lambda: adjust_zoom(-0.1, source="GPIO")
-    # btn_quit.when_pressed     = lambda: quit_app(source="GPIO")
-    # btn_wake.when_pressed     = lambda: wake_screen(source="GPIO")
+    btn_quit.when_pressed     = lambda: stop_magnifier(source="GPIO")
 
     logger.info("GPIO buttons initialized and callbacks registered")
 
+def cleanup_gpio():
+    btn_zoom_in.close()
+    btn_zoom_out.close()
+    btn_quit.close()
+    logger.info("GPIO buttons cleaned up!")
+    
 # --- Camera source abstraction ---
 def get_camera_source():
     try:
@@ -257,14 +245,16 @@ def launch_prod():
     screen_width = 1280  # default width for production
     logger.info("Launching in PROD mode (GPIO controls expected)")
     setup_gpio_controls()
+    logger.info("GPIO controls registered: zoom in/out, quit")
     run_magnifier(screen_width)
 
 # --- Entry point ---
+
 if __name__ == "__main__":
-    if ENV_MODE.upper() == "DEV":
-        logger.info("Keyboard controls enabled (DEV mode)")
-        launch_dev()
+    mode = os.getenv("APP_MODE", "DEV")
+    if mode == "PROD":
+        launch_prod()   # GPIO buttons, ON/OFF appliance mode
     else:
-        logger.info("GPIO buttons initialized, keyboard controls also available (PROD mode)")
-        launch_prod()
+        launch_dev()    # keyboard shortcuts
+
 
