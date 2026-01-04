@@ -253,6 +253,8 @@ def launch_prod():
 if __name__ == "__main__":
     mode = os.getenv("APP_MODE", "DEV")
     if mode == "PROD":
+        logger.info("APP_MODE=%s", os.getenv("APP_MODE", "DEV"))
+
         launch_prod()   # GPIO buttons, ON/OFF appliance mode
     else:
         launch_dev()    # keyboard shortcuts
