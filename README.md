@@ -26,7 +26,14 @@ Keyboard shortcuts:
 ```-``` zoom out
 
 ### Explicit DEV mode
-```MAGNIFIER_ENV=DEV python3 magnifier.py```
+```APP_MODE=DEV python3 magnifier.py```
 
 ### Production mode
-```MAGNIFIER_ENV=PROD python3 magnifier.py```
+```APP_MODE=PROD python3 magnifier.py```
+
+### Check system logs and status during app-level tests
+```journalctl -u magnifier.service -f```
+```systemctl status magnifier.service```
+
+## Additional Pi Setup Guides
+- [Raspberry Pi Onboarding Checklist](PI_ONBOARDING.md)

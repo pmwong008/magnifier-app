@@ -2,8 +2,10 @@
 # from gpiozero.pins.rpigpio import RPiGPIOPinFactory
 # gpiozero.Device.pin_factory = RPiGPIOPinFactory()
 
-from gpiozero import Button
-from signal import pause
+# from gpiozero import Button
+# import signal
+
+# from signal import pause
 '''
 btn_zoom_in  = Button(17, pull_up=True)
 btn_zoom_out = Button(27, pull_up=True)
@@ -37,13 +39,17 @@ btn4.when_pressed = lambda: print("Button 4 (GPIO23) pressed")
 
 print("Press each button...")
 '''
-
 from gpiozero import Button
-b = Button(17, pull_up=True)
-b.when_pressed = lambda: print("Button pressed")
-input("Press button now...")
+import signal
 
+btn = Button(17, pull_up=True)  # no bounce_time
 
+def pressed():
+    print("Button pressed instantly!")
 
-pause()
+btn.when_pressed = pressed
+
+print("Waiting for button presses on GPIO17...")
+signal.pause()
+
 
