@@ -65,3 +65,25 @@ A repeatable playbook for adding a new Pi (e.g., Pi5 with Bookworm desktop) into
 - `systemctl start|stop|restart magnifier.service` → manually control service.
 - `.venv` must be activated on devPi/Pi5 when running manually.
 - GitHub remains the single source of truth for bridging all devices.
+
+## NordVPN Control (devPi)
+
+
+- Use terminal login for reliability:
+
+`nordvpn login`
+`nordvpn connect`
+`nordvpn disconnect`
+`nordvpn status`
+
+- Allow devPi to reach testPi even while the VPN is active:
+
+`nordvpn set lan-discovery enable`
+
+- Enable auto connect:
+
+`nordvpn set autoconnect on`
+
+- List all settings:
+
+`nordvpn settings`
