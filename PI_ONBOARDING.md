@@ -26,3 +26,42 @@ A repeatable playbook for adding a new Pi (e.g., Pi5 with Bookworm desktop) into
 - Clone remote repo: `git clone git@github.com:pmwong008/magnifier-app.git`
 - Verify remotes: `git remote -v`
 
+## 4. Device Roles and Workflow
+
+### devPi (ArgonOne Pi4B)
+- **Purpose:** Development and coding in VSCode.
+- **GPIO Controls:** Not used (pins are fiddly on ArgonOne case).
+- **Magnifier Startup:** Disabled — does not auto‑start on boot.
+- **Execution:** Run manually inside `.venv` when testing (`source .venv/bin/activate` → `python magnifier.py`).
+- **GitHub Role:** Push/pull code changes; bridge to testPi and Pi5.
+
+### testPi
+- **Purpose:** Appliance‑like testing with GPIO controls.
+- **GPIO Controls:** Enabled and wired in.
+- **Magnifier Startup:** Enabled via `systemctl` — auto‑starts on boot.
+- **Execution:** Runs headless after boot, no manual activation needed.
+- **GitHub Role:** Pull latest code from devPi; validate real‑world operation.
+
+### Pi5 (new)
+- **Purpose:** Next‑generation workflow bridge.
+- **GPIO Controls:** None (same as devPi).
+- **Magnifier Startup:** Disabled — does not auto‑start on boot.
+- **Execution:** Manual run inside `.venv` for development/testing.
+- **GitHub Role:** Sync with devPi and testPi; future onboarding target.
+
+---
+
+### Workflow Summary
+1. **Develop on devPi** (manual run in `.venv`).
+2. **Push to GitHub**.
+3. **Pull on testPi** (auto‑start via `systemctl` with GPIO).
+4. **Validate appliance behavior**.
+5. **Onboard Pi5** following same split: devPi (manual) vs. testPi (auto).
+
+---
+
+### Notes
+- `systemctl is-enabled magnifier.service` → check if auto‑start is enabled.
+- `systemctl start|stop|restart magnifier.service` → manually control service.
+- `.venv` must be activated on devPi/Pi5 when running manually.
+- GitHub remains the single source of truth for bridging all devices.
