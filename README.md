@@ -34,3 +34,6 @@ Keyboard shortcuts:
 ### Check system logs and status during app-level tests
 ```journalctl -u magnifier.service -f```
 ```systemctl status magnifier.service```
+
+## Additional Pi Setup Guides
+- [Raspberry Pi Onboarding Checklist](PI_ONBOARDING.md)
