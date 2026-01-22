@@ -25,6 +25,7 @@ A repeatable playbook for adding a new Pi (e.g., Pi5 with Bookworm desktop) into
 ## 3. Repo Setup 
 - Clone remote repo: `git clone git@github.com:pmwong008/magnifier-app.git`
 - Verify remotes: `git remote -v`
+- Set remote origin: `git remote set-url origin git@github.com:pmwong008/magnifier-app.git`
 
 ## 4. Device Roles and Workflow
 
